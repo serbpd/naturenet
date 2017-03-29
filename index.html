@@ -121,11 +121,15 @@
             /*
              * tower fire
              */
+            towers.forEach(function(tower) {
+                Tower.prototype.fire(tower);
+            });
+            
             //towers.forEach(function(tower) {
-                //Tower.prototype.fire(tower);
+                //getNearestEnemy(tower.x, tower.y, 256/2);
             //});
             //  Run collision
-            game.physics.arcade.overlap(towers.rangeCirc, enemys, function(tower){Tower.prototype.fire(tower)}, null, this);
+            //game.physics.arcade.overlap(towers.rangeCirc, enemys, function(tower){Tower.prototype.fire(tower)}, null, this);
             game.physics.arcade.overlap(bullets, enemys, collisionHandler, null, this);
         }
         function listener(pointer) {
