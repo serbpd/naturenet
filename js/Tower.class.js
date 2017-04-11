@@ -4,7 +4,7 @@ var Tower = function(worldX, worldY, tileX, tileY, tile) {
     if ($.inArray(index, tileForbiden) == -1) {
         this.tower = game.add.sprite(worldX, worldY, tile);
         this.tower.rangeCirc = game.add.image(worldX-(32*3.5), worldY-(32*3.5), 'rangecircle');
-        this.tower.rangeCirc.alpha = .3;
+        this.tower.rangeCirc.alpha = .25;
         this.tower.range = 256/2;
         //game.physics.enable(this.tower.rangeCirc, Phaser.Physics.ARCADE);
         //rangeCirc.scale.setTo();
@@ -15,7 +15,7 @@ var Tower = function(worldX, worldY, tileX, tileY, tile) {
         this.tower.tileY = tileY;
         this.tower.tile = tile;
         this.tower.damage = 1;
-        this.tower.fireTime = 2000; //rate of fire
+        this.tower.fireTime = 1800; //rate of fire
         this.tower.fireLastTime = game.time.now + this.tower.fireTime;
         this.tower.closestEnemy = getNearestEnemy(this.tower.worldX, this.tower.worldY, this.tower.range);
         towers.add(this.tower);
@@ -49,7 +49,7 @@ Tower.prototype.fire = function(tower) {
         var bullet = bullets.getFirstExists(false);
         
         if (bullet && tower.closestEnemy != undefined) {
-            bullet.reset(tower.x+16, tower.y+16);
+            bullet.reset(tower.x+16, tower.y+16); //starting point of the bullet
             bullet.body.collideWorldBounds = false;
             bullet.rotation = parseFloat(game.physics.arcade.angleToXY(bullet, tower.closestEnemy.x, tower.closestEnemy.y)) * 180 / Math.PI;
             game.physics.arcade.moveToObject(bullet, tower.closestEnemy, 450); //targeting and bullet speed
@@ -62,17 +62,17 @@ function getNearestEnemy(x, y, range){
     var len = enemys.children.length;
     var distance = range;
     
-    for (var i=0;i<len;i++){
+    for (var i=0;i<len;i++){ //calculates dist from tower to every enemy
         var iEnemy = enemys.children[i];
         
         var a = x - iEnemy.x;
         var b = y - iEnemy.y;
         var c = Math.sqrt(a*a + b*b);
         
-        if (c < distance) {
+        if (c < distance) { //updates nearest enemy if dist is shorter
             distance = c;
             var nearestEnemy = iEnemy;
         }
     }
-    return (distance < range) ? nearestEnemy : undefined;
+    return (distance < range) ? nearestEnemy : undefined; //returns if the nearest enemy is within range
 }

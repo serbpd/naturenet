@@ -27,9 +27,11 @@
     <script type="text/javascript">
         var bulletTime = 0;
         var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', {preload: preload, create: create, update: update, render: render});
+        var gameWidth = 800;
+        var gameHeight = 600;
         var tileSquare = 32;
         var map, layer;
-        var tileForbiden = ["9", "10", "111", "112", "211", "212", "311", "312", "411", "412", "511", "512", "510", "59", "58", "68", "78", "88", "98", "108", "118", "128", "138", "139", "1310", "1311", "1312", "1313", "1314", "1315", "1316", "1416", "1516", "1616", "1716", "1816", "1916", "2016", "2116", "2115", "2114", "2113", "2213", "2313", "2413", "2513"]
+        var tileForbiden = ["9", "10", "111", "112", "211", "212", "311", "312", "410","409","408","407", "411", "412", "511", "512", "510", "59", "58", "68", "78", "88", "98", "108", "118", "128", "138", "139", "1310", "1311", "1312", "1313", "1314", "1315", "1316", "1416", "1516", "1616", "1716", "1816", "1916", "2016", "2116", "2115", "2114", "2113", "2213", "2313", "2413", "2513"];
         var path = [{x: 0, y: 12}, {x: 1, y: 12}, {x: 2, y: 12}, {x: 3, y: 12}, {x: 4, y: 12}, {x: 5, y: 12}, {x: 5, y: 11}, {x: 5, y: 10}, {x: 5, y: 9}, {x: 5, y: 8}, {x: 6, y: 8}, {x: 7, y: 8}, {x: 8, y: 8}, {x: 9, y: 8}, {x: 10, y: 8}, {x: 11, y: 8}, {x: 12, y: 8}, {x: 13, y: 8},
             {x: 13, y: 9}, {x: 13, y: 10}, {x: 13, y: 11}, {x: 13, y: 12}, {x: 13, y: 13}, {x: 13, y: 14}, {x: 13, y: 15}, {x: 13, y: 16}, {x: 14, y: 16}, {x: 15, y: 16}, {x: 16, y: 16}, {x: 17, y: 16}, {x: 18, y: 16}, {x: 19, y: 16}, {x: 20, y: 16}, {x: 21, y: 16}, {x: 21, y: 15},
             {x: 21, y: 14}, {x: 21, y: 13}, {x: 22, y: 13}, {x: 23, y: 13}, {x: 24, y: 13}, {x: 25, y: 13}];
@@ -37,14 +39,16 @@
         var car, car2, duck;
         var towers;
         var canAddTower = true;
+        var paused = false;
         var bulletsTowers, explosions, cursors, fireButton;
         function preload() {
-            game.load.tilemap('desert', 'assets/maps/tower-defense.json', null, Phaser.Tilemap.TILED_JSON);
-            game.load.image('tiles', 'assets/maps/tmw_desert_spacing.png');
-            game.load.image('car', 'assets/sprites/car90.png');
+            game.load.tilemap('desert', 'assets/maps/tower-defense_nature.json', null, Phaser.Tilemap.TILED_JSON);
+            game.load.image('tiles', 'assets/maps/spritesheet.png');
+    
             game.load.image('rangecircle', 'assets/sprites/rangecircle.png')
             game.load.image('tower', 'assets/sprites/Tower-32.png');
             game.load.image('bullet', 'assets/sprites/bullet.png');
+            game.load.image('menu', 'assets/sprites/resume.png');
             /*
              * Enemy Preload
              */
@@ -62,7 +66,7 @@
              */
             game.physics.startSystem(Phaser.Physics.ARCADE)
             map = game.add.tilemap('desert');
-            map.addTilesetImage('Desert', 'tiles');
+            map.addTilesetImage('NatureNet', 'tiles');
             layer = map.createLayer('Ground');
             layer.resizeWorld();
             //game.input.onDown.add(listener, this);
@@ -93,20 +97,50 @@
             enemys.physicsBodyType = Phaser.Physics.ARCADE;
 
             generateEnemy();
+            
+            //pause button
+            pause_label = game.add.text(600, 60, "Pause", {font: "24px Arial", fill: "#ff0044"});
+            pause_label.inputEnabled = true;
+            pause_label.events.onInputUp.add(function() {
+                paused = true;
+                pauseTiles();
+                game.paused = true;
+                menu = game.add.sprite(gameWidth/2, gameHeight/2, 'menu');
+                menu.anchor.setTo(0.5, 0.5);
+                menu.scale.setTo(.5, .5);
+                menu.alpha = .85;
+            });
+            
+            game.input.onDown.add(unpause, self);
 
+            //method that handles the pause menu
+            function unpause(event){
+                //Only act if paused
+                if(game.paused){
+                    //Calculate the corners of the play button
+                    var x1 = gameWidth/2 - 256/2, x2 = gameWidth/2 + 256/2,
+                        y1 = gameHeight/2 - 256/2, y2 = gameHeight/2 + 256/2;
 
-            var text = "+ Enemy";
-            var style = {font: "15px Arial", fill: "#ff0044", align: "center"};
-            var t = game.add.text(700, 20, text, style);
-            t.tint = "#000";
-            t.inputEnabled = true;
-            t.events.onInputDown.add(generateEnemy, this);
-            var text = "+ Tower";
-            var style = {font: "15px Arial", fill: "#ff0044", align: "center"};
-            var t = game.add.text(700, 40, text, style);
-            t.tint = "#000";
-            t.inputEnabled = true;
-            t.events.onInputDown.add(Tower.prototype.add(), this);
+                    //Check if the click was inside the play button
+                    if(event.x > x1 && event.x < x2 && event.y > y1 && event.y < y2){
+                        //Remove the menu
+                        menu.destroy();
+
+                        //Unpause the game
+                        paused = false;
+                        game.paused = false;
+                        tileForbiden = ["9", "10", "111", "112", "211", "212", "311", "312", "411", "412", "511", "512", "510", "59", "58", "68", "78", "88", "98", "108", "118", "128", "138", "139", "1310", "1311", "1312", "1313", "1314", "1315", "1316", "1416", "1516", "1616", "1716", "1816", "1916", "2016", "2116", "2115", "2114", "2113", "2213", "2313", "2413", "2513"];
+                    }
+                }
+            };
+
+            var spawnButton = game.add.text(600, 20, "Spawn Enemy", {font: "20px Arial", fill: "#ff0044", align: "center"});
+            spawnButton.tint = "#000";
+            spawnButton.inputEnabled = true;
+            spawnButton.events.onInputDown.add(generateEnemy, this);
+
+            game.input.onDown.add(Tower.prototype.add(), this);
+            //game.input.onDown.add(function(tower){tower.rangeCirc.alpha=0;}, this);
         }
         function render() {
 
@@ -125,11 +159,7 @@
                 Tower.prototype.fire(tower);
             });
             
-            //towers.forEach(function(tower) {
-                //getNearestEnemy(tower.x, tower.y, 256/2);
-            //});
             //  Run collision
-            //game.physics.arcade.overlap(towers.rangeCirc, enemys, function(tower){Tower.prototype.fire(tower)}, null, this);
             game.physics.arcade.overlap(bullets, enemys, collisionHandler, null, this);
         }
         function listener(pointer) {
@@ -152,7 +182,7 @@
         function generateEnemy() {
             var i = 0;
             var enemysBcl = setInterval(function() {
-                if (i < 5) { //sets # of enemies spawned
+                if (i < 5 ) { //sets # of enemies spawned
                     var animEnemy = enemysAnimation[parseInt(Math.random() * enemysAnimation.length)];
                     new Enemy(path[0].x * tileSquare, path[0].y * tileSquare, animEnemy.name, animEnemy.length);
                 } else {
@@ -160,6 +190,12 @@
                 }
                 i++;
             }, 1000);
+        }
+        
+        function pauseTiles(){
+            for(i=0; i<3001; i++){
+                tileForbiden.push(i.toString());
+            }
         }
 
     </script>
