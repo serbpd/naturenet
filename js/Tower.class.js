@@ -15,6 +15,7 @@ var Tower = function(worldX, worldY, tileX, tileY, tile) {
         this.tower.tileY = tileY;
         this.tower.tile = tile;
         this.tower.damage = 1;
+        this.tower.cost = 25;
         this.tower.fireTime = 1800; //rate of fire
         this.tower.fireLastTime = game.time.now + this.tower.fireTime;
         this.tower.closestEnemy = getNearestEnemy(this.tower.worldX, this.tower.worldY, this.tower.range);
@@ -24,12 +25,14 @@ var Tower = function(worldX, worldY, tileX, tileY, tile) {
 }
 
 Tower.prototype.add = function(pointer) {
-    game.input.onDown.add(Tower.prototype.posit);
-    var canvas = document.getElementById("imgCanvas");
-    var context = canvas.getContext("2d");
-    var rect = canvas.getBoundingClientRect();
-    var posx = pointer.clientX - rect.left;
-    var posy = pointer.clientY - rect.top;
+        game.input.onDown.add(Tower.prototype.posit);
+        var canvas = document.getElementById("imgCanvas");
+        var context = canvas.getContext("2d");
+        var rect = canvas.getBoundingClientRect();
+        var posx = pointer.clientX - rect.left;
+        var posy = pointer.clientY - rect.top;
+        coins -= this.tower.cost;
+        coinCount.text = coins;
 }
 
 Tower.prototype.posit = function(pointer) {
@@ -49,6 +52,7 @@ Tower.prototype.fire = function(tower) {
         var bullet = bullets.getFirstExists(false);
         
         if (bullet && tower.closestEnemy != undefined) {
+            bullet.scale.setTo(1.2, 1.2);
             bullet.reset(tower.x+16, tower.y+16); //starting point of the bullet
             bullet.body.collideWorldBounds = false;
             bullet.rotation = parseFloat(game.physics.arcade.angleToXY(bullet, tower.closestEnemy.x, tower.closestEnemy.y)) * 180 / Math.PI;
