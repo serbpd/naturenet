@@ -4,7 +4,7 @@ var Enemy = function(x, y, anim, animLength) {
     this.enemy.animations.add('walk');
     this.enemy.animations.play('walk', animLength, true);
     this.enemy.anchor.setTo(0.5, 0.5);
-    this.enemy.speed = 2;
+    this.enemy.speed = 1.5;
     this.enemy.speedX = 0;
     this.enemy.speedY = 0;
     this.enemy.curTile = 0;

@@ -1,7 +1,9 @@
 var Tower = function(worldX, worldY, tileX, tileY, tile) {
     var index = String(eval(tileX + "" + tileY));
 
-    if ($.inArray(index, tileForbiden) == -1) {
+    if ($.inArray(index, tileForbiden) == -1 && coins >= 25 && towerChoice == "tower") {
+        coins -= 25;
+        coinCount.text = coins;
         this.tower = game.add.sprite(worldX, worldY, tile);
         this.tower.rangeCirc = game.add.image(worldX-(32*3.5), worldY-(32*3.5), 'rangecircle');
         this.tower.rangeCirc.alpha = .25;
@@ -16,13 +18,15 @@ var Tower = function(worldX, worldY, tileX, tileY, tile) {
         this.tower.tile = tile;
         this.tower.damage = 1;
         this.tower.cost = 25;
-        this.tower.fireTime = 1800; //rate of fire
+        this.tower.fireTime = 1200; //rate of fire
         this.tower.fireLastTime = game.time.now + this.tower.fireTime;
         this.tower.closestEnemy = getNearestEnemy(this.tower.worldX, this.tower.worldY, this.tower.range);
         towers.add(this.tower);
         tileForbiden.push(index);
     }
+    
 }
+
 
 Tower.prototype.add = function(pointer) {
         game.input.onDown.add(Tower.prototype.posit);
@@ -40,7 +44,7 @@ Tower.prototype.posit = function(pointer) {
     var tileworldY = pointer.worldY - (pointer.worldY % tileSquare);
     var tileX = Math.floor(pointer.worldX / tileSquare);
     var tileY = Math.floor(pointer.worldY / tileSquare);
-    new Tower(tileworldX, tileworldY, tileX, tileY, 'tower');
+    new Tower(tileworldX, tileworldY, tileX, tileY, towerChoice);
 }
     
 Tower.prototype.fire = function(tower) {
@@ -64,7 +68,7 @@ Tower.prototype.fire = function(tower) {
 
 function getNearestEnemy(x, y, range){
     var len = enemys.children.length;
-    var distance = range;
+    var distance = range + 50;
     
     for (var i=0;i<len;i++){ //calculates dist from tower to every enemy
         var iEnemy = enemys.children[i];
