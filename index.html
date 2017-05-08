@@ -16,7 +16,6 @@
             }
         </style>
     
-    
     <div class = "wrapper">
     <body>
     
@@ -29,6 +28,8 @@
         var game = new Phaser.Game(800, 600, Phaser.CANVAS, 'gameContainer', {preload: preload, create: create, update: update, render: render});
         var lives = 10;
         var waveNum = 1;
+        var enemiesSpawned = 0;
+        var enemiesKilled = 0;
         var coins = 50;
         var gameWidth = 800;
         var gameHeight = 600;
@@ -38,7 +39,6 @@
         var path = [{x: 0, y: 12}, {x: 1, y: 12}, {x: 2, y: 12}, {x: 3, y: 12}, {x: 4, y: 12}, {x: 5, y: 12}, {x: 5, y: 11}, {x: 5, y: 10}, {x: 5, y: 9}, {x: 5, y: 8}, {x: 6, y: 8}, {x: 7, y: 8}, {x: 8, y: 8}, {x: 9, y: 8}, {x: 10, y: 8}, {x: 11, y: 8}, {x: 12, y: 8}, {x: 13, y: 8},
             {x: 13, y: 9}, {x: 13, y: 10}, {x: 13, y: 11}, {x: 13, y: 12}, {x: 13, y: 13}, {x: 13, y: 14}, {x: 13, y: 15}, {x: 13, y: 16}, {x: 14, y: 16}, {x: 15, y: 16}, {x: 16, y: 16}, {x: 17, y: 16}, {x: 18, y: 16}, {x: 19, y: 16}, {x: 20, y: 16}, {x: 21, y: 16}, {x: 21, y: 15},
             {x: 21, y: 14}, {x: 21, y: 13}, {x: 22, y: 13}, {x: 23, y: 13}, {x: 24, y: 13}, {x: 25, y: 13}];
-
 
         var enemysAnimation = [{'name': 'cup', 'length': 1}, {'name': 'jug', 'length': 1}, {'name': 'box', 'length': 1}, {'name': 'bottle', 'length': 1}];
         var car, car2, duck;
@@ -65,9 +65,9 @@
             game.load.image('towerButton', 'assets/sprites/plantbutton.png');
             game.load.image('towerButton2', 'assets/sprites/plantbutton1.png');
             game.load.image('towerButton3', 'assets/sprites/plantbutton2.png');
-            /*
-             * Enemy Preload
-             */
+            game.load.image('nextWave', 'assets/sprites/nextWave.png');
+            
+            //Enemy Preload
             game.load.spritesheet('cup', 'assets/sprites/cup.png', 32, 32, 1);
             game.load.spritesheet('jug', 'assets/sprites/jug.png', 42, 64, 1);
             game.load.spritesheet('box', 'assets/sprites/pizzaBox.png', 62, 41, 1);
@@ -76,23 +76,34 @@
 
         function create() {
 
-            /**
-             * Init map
-             */
+            //Init map
             game.physics.startSystem(Phaser.Physics.ARCADE);
             map = game.add.tilemap('desert');
             map.addTilesetImage('Nature', 'tiles');
             layer = map.createLayer('Ground');
             layer.resizeWorld();
             
-            
             exitBox = game.add.sprite(803, 425, 'exit');
             game.physics.enable(exitBox, Phaser.Physics.ARCADE);
             exitBox.enableBody = true;
             
-            lifeHeart = game.add.sprite(20, 20, 'heart');
-            lifeHeart.scale.setTo(.07, .07);
-            lifeCount = game.add.text(80, 30, lives, {font: "bold 38px Arial", fill: "#9e0000"});
+            nextText = game.add.text(90, 535, "Next Wave", {font: "bold 30px Arial", fill: "#9e0000"});
+            nextText.visible = false;
+            
+            lifeHeart = game.add.sprite(20, 18, 'heart');
+            lifeHeart.scale.setTo(.44, .44);
+            lifeCount = game.add.text(85, 30, lives, {font: "bold 38px Arial", fill: "#9e0000"});
+            
+            nextButton = game.add.button(10, 510, 'nextWave');
+            nextButton.scale.setTo(.4, .4);
+            nextButton.inputEnabled = false;
+            nextButton.visible = false;
+            nextButton.events.onInputUp.add(function(){
+                generateEnemy();
+                nextButton.inputEnabled = false;
+                nextButton.visible = false;
+                nextText.visible = false;
+            });
             
             //first tower menu selection
             first_tower = game.add.button(200,20, 'towerButton');
@@ -100,6 +111,7 @@
             first_tower.inputEnabled = true;
             first_tower.events.onInputUp.add(function() {
                 towerChoice = 'tower';
+                
             });
         
             //second tower menu selection
@@ -118,23 +130,17 @@
                 towerChoice = 'tower3';
             });
             
-            
-            
-            
             coinLogo = game.add.sprite(20, 80, 'logo');
             coinLogo.scale.setTo(.34, .34);
             coinCount = game.add.text(85, 95, coins, {font: "bold 38px Arial", fill: "#9e0000"});
             
             //game.input.onDown.add(listener, this);
-            /*
-             * Tower
-             */
-
+            
+            //Tower
             towers = game.add.group();
             game.physics.enable(towers, Phaser.Physics.ARCADE);
-            /*
-             * Towers Bullets
-             */
+            
+            //Towers Bullets
             bullets = game.add.group();
             bullets.enableBody = true;
             bullets.physicsBodyType = Phaser.Physics.ARCADE;
@@ -145,9 +151,7 @@
             bullets.setAll('checkWorldBounds', true);
             //bullets.events.onOutOfBounds.destroy(true, true);
 
-            /*
-             * Enemy
-             */
+            //Enemy
             enemys = game.add.group();
             enemys.enableBody = true;
             enemys.physicsBodyType = Phaser.Physics.ARCADE;
@@ -155,18 +159,17 @@
             generateEnemy();
             
             //pause button
-            // pause_label = game.add.text(600, 60, "Pause", {font: "bold 24px Arial", fill: "#ff0044"});
-            // pause_label.inputEnabled = true;
-            pauseButton = game.add.sprite(600, 60, 'pause');
+            pauseButton = game.add.sprite(700, 40, 'pause');
             pauseButton.inputEnabled = true;
+            pauseButton.scale.setTo(.4, .4);
             pauseButton.events.onInputUp.add(function() {
                 paused = true;
                 pauseTiles();
                 game.paused = true;
                 menu = game.add.sprite(gameWidth/2, gameHeight/2, 'menu');
                 menu.anchor.setTo(0.5, 0.5);
-                menu.scale.setTo(.5, .5);
-                menu.alpha = .85;
+                menu.scale.setTo(1.5, 1.5);
+                menu.alpha = .8;
             });
             
             game.input.onDown.add(unpause, self);
@@ -202,7 +205,6 @@
             
         }
         
-        
         function render() {
 
         }
@@ -218,22 +220,17 @@
                 Tower.prototype.fire(tower)
             });
             
-            if(enemys.children.length == 0){
-                lives == 100;
-                lifeCount.text = lives;
-            }
-            
             //  Run collision
             game.physics.arcade.overlap(bullets, enemys, collisionHandler, null, this);
             game.physics.arcade.overlap(exitBox, enemys, enemyExit, null, this);
         }
         
-        function listener(pointer) {
-            //add tower
-            if (canAddTower) {
-                Tower.prototype.add(pointer);
-            }
-        }
+        // function listener(pointer) {
+        //     //add tower
+        //     if (canAddTower) {
+        //         Tower.prototype.add(pointer);
+        //     }
+        // }
         
         function collisionHandler(bullet, enemy) {
             bullet.kill();
@@ -242,27 +239,46 @@
             if(enemy.health == 0){
                 enemy.destroy();
                 coins++;
+                enemiesKilled++;
+                
+                //starts next wave if all enemies are killed
+                if(enemiesKilled == enemiesSpawned){
+                    nextButton.inputEnabled = true;
+                    nextButton.visible = true;
+                    nextText.visible = true;
+                }
+                
                 coinCount.text = coins;
             }
         }
         
         function enemyExit(exit, enemy){
             lives--;
+            enemiesKilled++;
+            
+            //starts next wave if all enemies are killed
+            if(enemiesKilled == enemiesSpawned){
+                nextButton.inputEnabled = true;
+                nextButton.visible = true;
+                nextText.visible = true;
+            }
+            
             lifeCount.text = lives;
             enemy.destroy();
-            
-            if(lives <= 0){
-                restartGame();
-            }
         }
 
         function generateEnemy() {
+            //enemiesSpawned = 0;
+            //enemiesKilled = 0;
             var i = 0;
+            enemiesSpawned += waveNum + 3;
+            
             var enemysBcl = setInterval(function() {
-                if (i < 5) { //sets # of enemies spawned
+                if (i < waveNum+3) { //sets # of enemies spawned
                     waitForUnpause();
                     var animEnemy = enemysAnimation[parseInt(Math.random() * enemysAnimation.length)];
                     new Enemy(path[0].x * tileSquare, path[0].y * tileSquare, animEnemy.name, animEnemy.length);
+                    
                 } else {
                     clearTimeout(enemysBcl);
                 }
@@ -295,6 +311,8 @@
                 lives = 10;
                 coins = 50;
                 waveNum = 1;
+                enemiesSpawned = 0;
+                enemiesKilled = 0;
                 tileForbiden = ["10","111", "112", "211", "212", "311", "312", "410","409","408","407", "411", "412", "511", "512", "510", "59", "58", "68", "78", "88", "98", "108", "118", "128", "138", "139", "1310", "1311", "1312", "1313", "1314", "1315", "1316", "1416", "1516", "1616", "1716", "1816", "1916", "2016", "2116", "2115", "2114", "2113", "2213", "2313", "2413", "2513"];
             });
         }

@@ -1,12 +1,13 @@
 var Tower = function(worldX, worldY, tileX, tileY, tile) {
     var index = String(eval(tileX + "" + tileY));
 
-    if ($.inArray(index, tileForbiden) == -1 && coins >= 25 && towerChoice == "tower") {
+    if ($.inArray(index, tileForbiden) == -1 && coins >= 25) {
         coins -= 25;
         coinCount.text = coins;
         this.tower = game.add.sprite(worldX, worldY, tile);
         this.tower.rangeCirc = game.add.image(worldX-(32*3.5), worldY-(32*3.5), 'rangecircle');
         this.tower.rangeCirc.alpha = .25;
+        //setTimeout(function(){ this.tower.rangeCirc.visible = false; }, 3000);
         this.tower.range = 256/2;
         //game.physics.enable(this.tower.rangeCirc, Phaser.Physics.ARCADE);
         //rangeCirc.scale.setTo();
