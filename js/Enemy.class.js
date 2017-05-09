@@ -1,4 +1,4 @@
-var Enemy = function(x, y, anim, animLength) {
+var Enemy = function(x, y, anim, animLength, hp) {
     this.enemy = game.add.sprite(path[0].x * tileSquare, path[0].y * tileSquare, anim);
     // enemy walk animations, walk speed, health 
     this.enemy.animations.add('walk');
@@ -8,7 +8,7 @@ var Enemy = function(x, y, anim, animLength) {
     this.enemy.speedX = 0;
     this.enemy.speedY = 0;
     this.enemy.curTile = 0;
-    this.enemy.health = 2;
+    this.enemy.health = hp;
     enemys.add(this.enemy);
     Enemy.prototype.nextTile(this.enemy);
     Enemy.prototype.moveElmt(this.enemy);
@@ -65,4 +65,8 @@ Enemy.prototype.nextTile = function(enemy) {
     } else {
         enemy.speedY = 0;
     }
+}
+
+function damageEnemy(dmg){
+    this.enemy.health -= dmg;
 }

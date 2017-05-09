@@ -5,10 +5,10 @@ var Tower = function(worldX, worldY, tileX, tileY, tile) {
         coins -= 25;
         coinCount.text = coins;
         this.tower = game.add.sprite(worldX, worldY, tile);
-        this.tower.rangeCirc = game.add.image(worldX-(32*3.5), worldY-(32*3.5), 'rangecircle');
-        this.tower.rangeCirc.alpha = .25;
+        this.tower.rangeCirc = game.add.image(worldX-(32*3.2), worldY-(32*3.2), 'rangecircle');
+        this.tower.rangeCirc.alpha = .05;
         //setTimeout(function(){ this.tower.rangeCirc.visible = false; }, 3000);
-        this.tower.range = 256/2;
+        this.tower.range = 140;
         //game.physics.enable(this.tower.rangeCirc, Phaser.Physics.ARCADE);
         //rangeCirc.scale.setTo();
         //this.tower.scale.setTo(2, 2);
@@ -57,9 +57,11 @@ Tower.prototype.fire = function(tower) {
         var bullet = bullets.getFirstExists(false);
         
         if (bullet && tower.closestEnemy != undefined) {
+            fireSound.play();
             bullet.scale.setTo(1.2, 1.2);
             bullet.reset(tower.x+16, tower.y+16); //starting point of the bullet
             bullet.body.collideWorldBounds = false;
+            bullet.damage = tower.damage;
             bullet.rotation = parseFloat(game.physics.arcade.angleToXY(bullet, tower.closestEnemy.x, tower.closestEnemy.y)) * 180 / Math.PI;
             game.physics.arcade.moveToObject(bullet, tower.closestEnemy, 450); //targeting and bullet speed
         }
